@@ -1,32 +1,46 @@
-const express = require("express");
-const app = express();
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const ip = require("ip");
+const mqttPub = () => require('./publish');
+const mqttSub = () => require('./subscribe');
+const host = require('ip').address();
 
-app.use(express.json());
-app.use(bodyParser.json());
-app.use(cors({ origin: true }));
+//valor en segundos
+const red = 15;
+const green = 10;
+const yellow = 5;
 
-const mqtt = require("mqtt");
-const client = mqtt.connect(`tcp://${ip.address()}:1883`);
+var timeLeft;
+var colorLight;
 
-app.listen(3000, () =>
-  console.log(`http://localhost:3000 ó http://${ip.address()}:3000`)
-);
+const topicLtrafic = 'avenue/light-trafic';
+const topicBtrafic = 'avenue/app-pedestrian';
 
-app.post("/", (req, res) => {
-  const { topic, message } = req.body;
+const traficLight = () => {
 
-  client.on("connect", () => {
-    client.subscribe(topic, (err) => {
-      if (!err) client.publish(topic, message);
-      else res.json({ isSuccess: false });
-    });
-  });
+    let timeLeftR = red;
+    let timeLeftG = green;
+    let timeLeftY = yellow;
 
-  client.on("message", () => {
-    res.json({ isSuccess: true });
-    client.end();
-  });
-});
+    const interval = setInterval(() => {
+        if (timeLeftG > 0) {
+            timeLeft = timeLeftG--;
+            colorLight = "Green";
+        } else if (timeLeftY > 0) {
+            timeLeft = timeLeftY--;
+            colorLight = "Yellow";
+        } else if (timeLeftR > 0) {
+            timeLeft = timeLeftR--;
+            colorLight = "Red";
+        } else {
+            clearInterval(interval);
+            traficLight();
+        }
+
+        process.stdout.write('\033c');
+        const countDown = `${colorLight}: Time Remaining ${timeLeft}`;
+        console.log(countDown);
+        mqttPub(topicLtrafic, countDown, host);
+        //mqttSub(topicBtrafic, host);
+
+    }, 1000);
+};
+
+traficLight();
