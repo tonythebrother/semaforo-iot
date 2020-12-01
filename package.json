@@ -1,6 +1,6 @@
 {
   "name": "semaforo-iot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "\"Proyecto final de Fundamentos de Programacion para IoT impartido en el Instituto Tecnológico de las Américas (ITLA), para presentar el dia 1/12/2020.",
   "main": "index.js",
   "scripts": {
